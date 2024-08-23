@@ -1,10 +1,9 @@
 @echo off
 setlocal enabledelayedexpansion
 
+:restart
 :: Clear the contents of the pain_table.txt file at the start without adding a new line
 break > pain_table.txt
-
-:restart
 :: Clear the console and ask for initial pain score at time 0
 cls
 set /p pain0="Enter the starting pain score (0-100) at time point 0: "
