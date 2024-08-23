@@ -6,7 +6,7 @@ setlocal enabledelayedexpansion
 break > pain_table.txt
 
 :: Add column headers to the table
-echo Time n^| Pain Scores     ^| Reduction Percentage >> pain_table.txt
+echo TIME n^| PAIN SCORES     ^| REDUCTION PERCENTAGE >> pain_table.txt
 
 :: Clear the console and ask for initial pain score at time 0
 cls
