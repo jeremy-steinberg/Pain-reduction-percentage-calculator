@@ -1,0 +1,5 @@
+Time 0| Pain Score: 10 | Target for 80% Reduction: 2 
+Time 1| Pain Score: 4.5 | Reduction: 60% 
+Time 2| Pain Score: 5 | Reduction: 50% 
+Time 3| Pain Score: 5.5 | Reduction: 50% 
+Time 4| Pain Score: 9.5 | Reduction: 10% 
