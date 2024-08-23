@@ -16,7 +16,9 @@ set /p pain0="Enter the starting pain score (0-100) at time point 0: "
 set /a targetPainScore=pain0*20/100
 
 :: Initialize the table with the target pain score
-echo Time 0^| Pain Score: %pain0% ^| (Target for 80%% Reduction: %targetPainScore%) >> pain_table.txt
+set "paddedPain0=   %pain0%"
+set "paddedPain0=!paddedPain0:~-3!"
+echo Time 0^| Pain Score: !paddedPain0! ^| N/A - target for 80%% Reduction: %targetPainScore% >> pain_table.txt
 
 set timePoint=0
 
@@ -38,8 +40,12 @@ set /a reductionPercentage=((pain0 - painNow) * 100) / pain0
 :: Get current time point number
 set /a timePoint+=1
 
+:: Pad the pain score to ensure it has a fixed width
+set "paddedPainNow=   %painNow%"
+set "paddedPainNow=!paddedPainNow:~-3!"
+
 :: Output the new row to the table
-echo Time %timePoint%^| Pain Score: %painNow% ^| Reduction: %reductionPercentage%%% >> pain_table.txt
+echo Time %timePoint%^| Pain Score: !paddedPainNow! ^| Reduction: %reductionPercentage%%% >> pain_table.txt
 
 :: Loop again
 goto loop
