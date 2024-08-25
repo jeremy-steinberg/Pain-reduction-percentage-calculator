@@ -41,8 +41,9 @@ class PainTrackerApp:
 
         # Buttons
         ttk.Button(self.master, text="Delete Selected", command=self.delete_selected).grid(row=3, column=0, padx=5, pady=5)
-        ttk.Button(self.master, text="Restart", command=self.restart).grid(row=3, column=1, padx=5, pady=5)
-        ttk.Button(self.master, text="Quit", command=self.master.quit).grid(row=3, column=2, padx=5, pady=5)
+        ttk.Button(self.master, text="Restart", command=self.restart).grid(row=3, column=1, padx=5, pady=5, sticky="w")
+        ttk.Button(self.master, text="Copy to Clipboard", command=self.copy_to_clipboard).grid(row=3, column=2, padx=5, pady=5, sticky="w")
+        ttk.Button(self.master, text="Quit", command=self.master.quit).grid(row=4, column=2, padx=5, pady=5, sticky="w")
 
     def start_tracking(self):
         try:
@@ -95,6 +96,22 @@ class PainTrackerApp:
         self.time_point = 0
         self.target_pain_score = 0
         self.tree.delete(*self.tree.get_children())
+
+    def copy_to_clipboard(self):
+        # Define the headers
+        headers = "Time\tPain\tReduction\n"
+        
+        # Collect the table data
+        table_data = headers
+        for child in self.tree.get_children():
+            row = self.tree.item(child)["values"]
+            row_data = "\t".join(str(value) for value in row)
+            table_data += row_data + "\n"
+
+        # Copy to clipboard
+        self.master.clipboard_clear()
+        self.master.clipboard_append(table_data)
+        messagebox.showinfo("Copied", "Table data has been copied to clipboard.")
 
 if __name__ == "__main__":
     root = tk.Tk()

@@ -1,4 +1,5 @@
 TIME n| PAIN SCORES     | REDUCTION PERCENTAGE 
 Time 0| Pain Score: 100 | N/A - target for 80% Reduction: 20 
 Time 1| Pain Score:  50 | Reduction: 50% 
-Time 2| Pain Score:  10 | Reduction: 90% 
+Time 2| Pain Score:  20 | Reduction: 80% 
+Time 3| Pain Score:  10 | Reduction: 90% 
