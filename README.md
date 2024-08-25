@@ -1,1 +1,1 @@
-A very simple batch script to calculate pain percentage reduction at different time points. There is also a simple python and executable version. For use with diagnostic local anaesthetic injections.
+A tool to use with diagnostic injections to determine pain reduction at different time points. There is a simple batch script version, a simple GUI version, and a GUI version with a graph. AI assisted coding.
