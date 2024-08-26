@@ -1,7 +1,13 @@
 import tkinter as tk
-from tkinter import ttk, messagebox, simpledialog
+from tkinter import ttk, messagebox, simpledialog, filedialog
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+from matplotlib.backends.backend_pdf import PdfPages
+from reportlab.lib import colors
+from reportlab.lib.pagesizes import letter
+from reportlab.lib.styles import getSampleStyleSheet
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Image, Paragraph
+import matplotlib.pyplot as plt
 import numpy as np
 
 class PainTrackerApp:
@@ -18,6 +24,7 @@ class PainTrackerApp:
         self.use_minutes = tk.BooleanVar(value=True)
         self.show_actual_pain = tk.BooleanVar(value=True)
         self.show_comments = tk.BooleanVar(value=True)
+        self.show_80_percent_line = tk.BooleanVar(value=False)
         self.custom_time = tk.IntVar(value=30)
 
         self.create_widgets()
@@ -48,7 +55,8 @@ class PainTrackerApp:
         options = [
             ("Use Minutes (triggers restart)", self.use_minutes, self.toggle_time_display),
             ("Show Actual Pain Scores on Graph", self.show_actual_pain, self.update_graph),
-            ("Show Comments", self.show_comments, self.update_graph)
+            ("Show Comments", self.show_comments, self.update_graph),
+            ("Show 80% Reduction Line", self.show_80_percent_line, self.update_graph)  # New option
         ]
         for i, (text, var, cmd) in enumerate(options):
             ttk.Checkbutton(time_frame, text=text, variable=var, command=cmd).grid(row=0, column=i, padx=5, pady=5, sticky="w")
@@ -72,6 +80,7 @@ class PainTrackerApp:
             ("Delete Selected", self.delete_selected),
             ("Add/Edit Comment", self.add_edit_comment),
             ("Copy to Clipboard", self.copy_to_clipboard),
+            ("Export to PDF", self.export_to_pdf),  # New button
             ("Restart", self.restart),
             ("Quit", self.master.quit)
         ]
@@ -115,6 +124,11 @@ class PainTrackerApp:
                 for x, y, comment in zip(time_points, pain_scores, comments):
                     if comment:
                         self.ax.annotate(comment, (x, y), xytext=(0, 20), textcoords="offset points", ha='center', va='bottom', bbox=dict(boxstyle="round,pad=0.3", fc="yellow", ec="b", lw=1, alpha=0.8))
+        
+            if self.show_80_percent_line.get():  # Draw the 80% reduction line
+                self.ax.axhline(y=self.target_pain_score, color='red', linestyle='--', label='80% Reduction')
+                self.ax.legend()
+
         else:
             self.ax.set_xlim(0, 1)
             self.ax.text(0.5, 50, "No data yet", ha='center', va='center')
@@ -123,7 +137,6 @@ class PainTrackerApp:
         self.ax.set_xlabel("Time" if not self.use_minutes.get() else "Minutes")
         self.ax.set_ylabel("Pain Score")
         self.canvas.draw()
-
 
     def get_graph_data(self):
         time_points, pain_scores, comments = [], [], []
@@ -230,6 +243,76 @@ class PainTrackerApp:
         if new_comment is not None:
             self.tree.item(item, values=(values[0], values[1], values[2], new_comment))
             self.update_graph()
+
+    def export_to_pdf(self):
+        # Prompt for patient details
+        patient_name = simpledialog.askstring("Patient Name", "Enter the patient's name:")
+        if not patient_name:
+            return
+        
+        patient_nhi = simpledialog.askstring("Patient NHI", "Enter the patient's NHI:")
+        if not patient_nhi:
+            return
+
+        procedure_date = simpledialog.askstring("Procedure Date", "Enter the procedure date (DD-MM-YYYY):")
+        if not procedure_date:
+            return
+
+        procedure_name = simpledialog.askstring("Procedure Name", "Enter the procedure name:")
+        if not procedure_name:
+            return
+
+        # Ask user where to save the file
+        file_path = filedialog.asksaveasfilename(defaultextension=".pdf", filetypes=[("PDF files", "*.pdf")])
+        if not file_path:
+            return
+
+        # Save the current figure (graph) as an image
+        graph_image_path = "graph.png"
+        self.figure.savefig(graph_image_path, format='png')
+
+        # Create a PDF document
+        pdf = SimpleDocTemplate(file_path, pagesize=letter)
+
+        # Prepare patient details to be printed at the top of the PDF
+        styles = getSampleStyleSheet()
+        patient_details = Paragraph(f"<strong>Patient Name</strong>: {patient_name}<br/><strong>Patient NHI</strong>: {patient_nhi}<br/><strong>Procedure Date</strong>: {procedure_date}<br/><strong>Procedure Name</strong>: {procedure_name}<br/><br/>", styles["Normal"])
+
+        # Prepare data for the table
+        data = [["Time", "Pain", "Reduction", "Comment"]]
+        for child in self.tree.get_children():
+            item = self.tree.item(child)["values"]
+            data.append(item)
+
+        # Create the table with the data
+        table = Table(data)
+
+        # Add some style to the table
+        style = TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+            ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
+            ('GRID', (0, 0), (-1, -1), 1, colors.black)
+        ])
+        table.setStyle(style)
+
+        # Create an image object from the saved graph
+        graph_image = Image(graph_image_path)
+
+        # Set the image width and height, adjusting to fit the page
+        graph_image.drawHeight = 4 * 72  # 4 inches
+        graph_image.drawWidth = 7 * 72  # 7 inches
+
+        # Build the PDF with the patient details, graph, and the table
+        elements = [patient_details, graph_image, table]
+        pdf.build(elements)
+
+        messagebox.showinfo("Exported", f"Pain Tracker data has been exported to {file_path}.")
+
+
 
 if __name__ == "__main__":
     root = tk.Tk()
