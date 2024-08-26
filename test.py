@@ -18,6 +18,7 @@ class PainTrackerApp:
         self.use_minutes = tk.BooleanVar(value=True)
         self.show_actual_pain = tk.BooleanVar(value=True)
         self.show_comments = tk.BooleanVar(value=True)
+        self.show_80_percent_line = tk.BooleanVar(value=False)
         self.custom_time = tk.IntVar(value=30)
 
         self.create_widgets()
@@ -48,7 +49,8 @@ class PainTrackerApp:
         options = [
             ("Use Minutes (triggers restart)", self.use_minutes, self.toggle_time_display),
             ("Show Actual Pain Scores on Graph", self.show_actual_pain, self.update_graph),
-            ("Show Comments", self.show_comments, self.update_graph)
+            ("Show Comments", self.show_comments, self.update_graph),
+            ("Show 80% Reduction Line", self.show_80_percent_line, self.update_graph)  # New option
         ]
         for i, (text, var, cmd) in enumerate(options):
             ttk.Checkbutton(time_frame, text=text, variable=var, command=cmd).grid(row=0, column=i, padx=5, pady=5, sticky="w")
@@ -115,6 +117,11 @@ class PainTrackerApp:
                 for x, y, comment in zip(time_points, pain_scores, comments):
                     if comment:
                         self.ax.annotate(comment, (x, y), xytext=(0, 20), textcoords="offset points", ha='center', va='bottom', bbox=dict(boxstyle="round,pad=0.3", fc="yellow", ec="b", lw=1, alpha=0.8))
+        
+            if self.show_80_percent_line.get():  # Draw the 80% reduction line
+                self.ax.axhline(y=self.target_pain_score, color='red', linestyle='--', label='80% Reduction')
+                self.ax.legend()
+
         else:
             self.ax.set_xlim(0, 1)
             self.ax.text(0.5, 50, "No data yet", ha='center', va='center')
@@ -123,7 +130,6 @@ class PainTrackerApp:
         self.ax.set_xlabel("Time" if not self.use_minutes.get() else "Minutes")
         self.ax.set_ylabel("Pain Score")
         self.canvas.draw()
-
 
     def get_graph_data(self):
         time_points, pain_scores, comments = [], [], []
