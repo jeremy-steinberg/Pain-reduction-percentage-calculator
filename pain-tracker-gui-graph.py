@@ -14,8 +14,8 @@ class PainTrackerApp:
     def __init__(self, master):
         self.master = master
         master.title("Pain Tracker")
-        master.geometry("850x900")
-        
+        master.geometry("850x1050")
+
         self.master.bind("<Delete>", self.on_delete_key)
         self.pain0 = tk.IntVar()
         self.current_pain = tk.IntVar()
@@ -26,6 +26,12 @@ class PainTrackerApp:
         self.show_comments = tk.BooleanVar(value=True)
         self.show_80_percent_line = tk.BooleanVar(value=False)
         self.custom_time = tk.IntVar(value=30)
+
+        # Patient details variables
+        self.patient_name = tk.StringVar()
+        self.patient_nhi = tk.StringVar()
+        self.procedure_date = tk.StringVar()
+        self.procedure_name = tk.StringVar()
 
         self.create_widgets()
         self.create_graph()
@@ -61,8 +67,26 @@ class PainTrackerApp:
         for i, (text, var, cmd) in enumerate(options):
             ttk.Checkbutton(time_frame, text=text, variable=var, command=cmd).grid(row=0, column=i, padx=5, pady=5, sticky="w")
 
+        # Patient details section
+        patient_frame = ttk.LabelFrame(main_frame, text="Patient Details", padding="10")
+        patient_frame.grid(row=2, column=0, columnspan=3, padx=5, pady=5, sticky="ew")
+
+        # First row
+        ttk.Label(patient_frame, text="Patient Name:").grid(row=0, column=0, padx=5, pady=5, sticky="e")
+        ttk.Entry(patient_frame, textvariable=self.patient_name, width=40).grid(row=0, column=1, padx=5, pady=5, sticky="w")
+
+        ttk.Label(patient_frame, text="Patient NHI:").grid(row=0, column=2, padx=5, pady=5, sticky="e")
+        ttk.Entry(patient_frame, textvariable=self.patient_nhi, width=40).grid(row=0, column=3, padx=5, pady=5, sticky="w")
+
+        # Second row
+        ttk.Label(patient_frame, text="Procedure Date (DD-MM-YYYY):").grid(row=1, column=0, padx=5, pady=5, sticky="e")
+        ttk.Entry(patient_frame, textvariable=self.procedure_date, width=40).grid(row=1, column=1, padx=5, pady=5, sticky="w")
+
+        ttk.Label(patient_frame, text="Procedure Name:").grid(row=1, column=2, padx=5, pady=5, sticky="e")
+        ttk.Entry(patient_frame, textvariable=self.procedure_name, width=40).grid(row=1, column=3, padx=5, pady=5, sticky="w")
+
         table_frame = ttk.Frame(main_frame)
-        table_frame.grid(row=2, column=0, columnspan=3, padx=5, pady=5, sticky="nsew")
+        table_frame.grid(row=3, column=0, columnspan=3, padx=5, pady=5, sticky="nsew")
         table_frame.columnconfigure(0, weight=1)
         table_frame.rowconfigure(0, weight=1)
         self.tree = ttk.Treeview(table_frame, columns=("Time", "Pain Score", "Reduction", "Comment"), show="headings")
@@ -75,7 +99,7 @@ class PainTrackerApp:
         self.tree.bind("<Double-1>", self.add_edit_comment)
 
         button_frame = ttk.Frame(main_frame)
-        button_frame.grid(row=3, column=0, columnspan=3, padx=5, pady=5, sticky="ew")
+        button_frame.grid(row=4, column=0, columnspan=3, padx=5, pady=5, sticky="ew")
         buttons = [
             ("Delete Selected", self.delete_selected),
             ("Add/Edit Comment", self.add_edit_comment),
@@ -86,6 +110,7 @@ class PainTrackerApp:
         ]
         for i, (text, cmd) in enumerate(buttons):
             ttk.Button(button_frame, text=text, command=cmd).grid(row=0, column=i, padx=5, pady=15)
+
 
     def create_graph(self):
         self.figure = Figure(figsize=(7, 4), dpi=100)
@@ -245,21 +270,15 @@ class PainTrackerApp:
             self.update_graph()
 
     def export_to_pdf(self):
-        # Prompt for patient details
-        patient_name = simpledialog.askstring("Patient Name", "Enter the patient's name:")
-        if not patient_name:
-            return
-        
-        patient_nhi = simpledialog.askstring("Patient NHI", "Enter the patient's NHI:")
-        if not patient_nhi:
-            return
+        # Use the entered patient details
+        patient_name = self.patient_name.get()
+        patient_nhi = self.patient_nhi.get()
+        procedure_date = self.procedure_date.get()
+        procedure_name = self.procedure_name.get()
 
-        procedure_date = simpledialog.askstring("Procedure Date", "Enter the procedure date (DD-MM-YYYY):")
-        if not procedure_date:
-            return
-
-        procedure_name = simpledialog.askstring("Procedure Name", "Enter the procedure name:")
-        if not procedure_name:
+        # Validate patient details
+        if not all([patient_name, patient_nhi, procedure_date, procedure_name]):
+            messagebox.showerror("Error", "All patient details must be filled in.")
             return
 
         # Ask user where to save the file
