@@ -7,14 +7,13 @@ from reportlab.lib import colors
 from reportlab.lib.pagesizes import letter
 from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Image, Paragraph
-import matplotlib.pyplot as plt
 import numpy as np
 
 class PainTrackerApp:
     def __init__(self, master):
         self.master = master
         master.title("Pain Tracker")
-        master.geometry("850x1050")
+        master.geometry("1650x750")  # Increased width to accommodate side-by-side layout
 
         self.master.bind("<Delete>", self.on_delete_key)
         self.pain0 = tk.IntVar()
@@ -34,7 +33,7 @@ class PainTrackerApp:
         self.procedure_name = tk.StringVar()
 
         self.create_widgets()
-        self.create_graph()
+        # The create_graph method will be called within create_widgets
 
     def create_widgets(self):
         main_frame = ttk.Frame(self.master, padding="10")
@@ -42,8 +41,15 @@ class PainTrackerApp:
         self.master.columnconfigure(0, weight=1)
         self.master.rowconfigure(0, weight=1)
 
-        pain_frame = ttk.LabelFrame(main_frame, text="Pain Score Entry", padding="10")
-        pain_frame.grid(row=0, column=0, columnspan=3, padx=5, pady=5, sticky="ew")
+        # Left side frame for controls and table
+        left_frame = ttk.Frame(main_frame)
+        left_frame.grid(row=0, column=0, sticky=(tk.W, tk.E, tk.N, tk.S))
+        left_frame.columnconfigure(0, weight=1)
+        left_frame.rowconfigure(4, weight=1)  # Make the table expandable
+
+        # Pain Score Entry
+        pain_frame = ttk.LabelFrame(left_frame, text="Pain Score Entry", padding="10")
+        pain_frame.grid(row=0, column=0, padx=5, pady=5, sticky="ew")
 
         ttk.Label(pain_frame, text="Starting pain score (0-100):").grid(row=0, column=0, padx=5, pady=5, sticky="e")
         ttk.Entry(pain_frame, textvariable=self.pain0, width=10).grid(row=0, column=1, padx=5, pady=5)
@@ -56,8 +62,8 @@ class PainTrackerApp:
         self.custom_time_entry.grid(row=1, column=3, padx=5, pady=5)
         ttk.Button(pain_frame, text="Add", command=self.add_pain_score).grid(row=1, column=4, padx=5, pady=5)
 
-        time_frame = ttk.LabelFrame(main_frame, text="Options", padding="10")
-        time_frame.grid(row=1, column=0, columnspan=3, padx=5, pady=5, sticky="ew")
+        time_frame = ttk.LabelFrame(left_frame, text="Options", padding="10")
+        time_frame.grid(row=1, column=0, padx=5, pady=5, sticky="ew")
         options = [
             ("Use Minutes (triggers restart)", self.use_minutes, self.toggle_time_display),
             ("Show Actual Pain Scores on Graph", self.show_actual_pain, self.update_graph),
@@ -68,8 +74,8 @@ class PainTrackerApp:
             ttk.Checkbutton(time_frame, text=text, variable=var, command=cmd).grid(row=0, column=i, padx=5, pady=5, sticky="w")
 
         # Patient details section
-        patient_frame = ttk.LabelFrame(main_frame, text="Patient Details", padding="10")
-        patient_frame.grid(row=2, column=0, columnspan=3, padx=5, pady=5, sticky="ew")
+        patient_frame = ttk.LabelFrame(left_frame, text="Patient Details", padding="10")
+        patient_frame.grid(row=2, column=0, padx=5, pady=5, sticky="ew")
 
         # First row
         ttk.Label(patient_frame, text="Patient Name:").grid(row=0, column=0, padx=5, pady=5, sticky="e")
@@ -85,11 +91,13 @@ class PainTrackerApp:
         ttk.Label(patient_frame, text="Procedure Name:").grid(row=1, column=2, padx=5, pady=5, sticky="e")
         ttk.Entry(patient_frame, textvariable=self.procedure_name, width=40).grid(row=1, column=3, padx=5, pady=5, sticky="w")
 
-        table_frame = ttk.Frame(main_frame)
-        table_frame.grid(row=3, column=0, columnspan=3, padx=5, pady=5, sticky="nsew")
+        # Table
+        table_frame = ttk.Frame(left_frame)
+        table_frame.grid(row=3, column=0, padx=5, pady=0, sticky="nsew")
         table_frame.columnconfigure(0, weight=1)
         table_frame.rowconfigure(0, weight=1)
-        self.tree = ttk.Treeview(table_frame, columns=("Time", "Pain Score", "Reduction", "Comment"), show="headings")
+
+        self.tree = ttk.Treeview(table_frame, columns=("Time", "Pain Score", "Reduction", "Comment"), show="headings", height=15)
         for col in self.tree["columns"]:
             self.tree.heading(col, text=col)
         self.tree.grid(row=0, column=0, sticky="nsew")
@@ -98,22 +106,28 @@ class PainTrackerApp:
         self.tree.configure(yscrollcommand=scrollbar.set)
         self.tree.bind("<Double-1>", self.add_edit_comment)
 
-        button_frame = ttk.Frame(main_frame)
-        button_frame.grid(row=4, column=0, columnspan=3, padx=5, pady=5, sticky="ew")
+        # Buttons
+        button_frame = ttk.Frame(left_frame)
+        button_frame.grid(row=4, column=0, padx=5, pady=0, sticky="ew")
         buttons = [
             ("Delete Selected", self.delete_selected),
             ("Add/Edit Comment", self.add_edit_comment),
             ("Copy to Clipboard", self.copy_to_clipboard),
-            ("Export to PDF", self.export_to_pdf),  # New button
+            ("Export to PDF", self.export_to_pdf),
             ("Restart", self.restart),
             ("Quit", self.master.quit)
         ]
         for i, (text, cmd) in enumerate(buttons):
-            ttk.Button(button_frame, text=text, command=cmd).grid(row=0, column=i, padx=5, pady=15)
+            ttk.Button(button_frame, text=text, command=cmd).grid(row=0, column=i, padx=5, pady=5, sticky="ew")
 
 
-    def create_graph(self):
-        self.figure = Figure(figsize=(7, 4), dpi=100)
+        # Right side frame for graph
+        right_frame = ttk.Frame(main_frame)
+        right_frame.grid(row=0, column=1, sticky=(tk.W, tk.E, tk.N, tk.S))
+        self.create_graph(right_frame)
+
+    def create_graph(self, parent):
+        self.figure = Figure(figsize=(8, 6), dpi=100)  # Adjusted size for vertical layout
         self.ax = self.figure.add_subplot(111)
         self.ax.set_title("Pain Graph")
         self.ax.set_xlabel("Time")
@@ -123,8 +137,8 @@ class PainTrackerApp:
         self.ax.set_yticks(np.arange(0, 101, 10))
         self.ax.text(0.5, 50, "No data yet", ha='center', va='center')
 
-        self.canvas = FigureCanvasTkAgg(self.figure, self.master)
-        self.canvas.get_tk_widget().grid(row=7, column=0, columnspan=5, padx=5, pady=5)
+        self.canvas = FigureCanvasTkAgg(self.figure, parent)
+        self.canvas.get_tk_widget().pack(fill=tk.BOTH, expand=True)
 
     def update_graph(self):
         time_points, pain_scores, comments = self.get_graph_data()
@@ -148,7 +162,7 @@ class PainTrackerApp:
             if self.show_comments.get():
                 for x, y, comment in zip(time_points, pain_scores, comments):
                     if comment:
-                        self.ax.annotate(comment, (x, y), xytext=(0, 20), textcoords="offset points", ha='center', va='bottom', bbox=dict(boxstyle="round,pad=0.3", fc="yellow", ec="b", lw=1, alpha=0.8))
+                        self.ax.annotate(comment, (x, y), xytext=(0, 30), textcoords="offset points", ha='center', va='bottom', bbox=dict(boxstyle="round,pad=0.3", fc="yellow", ec="b", lw=1, alpha=0.8))
         
             if self.show_80_percent_line.get():  # Draw the 80% reduction line
                 self.ax.axhline(y=self.target_pain_score, color='red', linestyle='--', label='80% Reduction')
@@ -322,7 +336,7 @@ class PainTrackerApp:
         graph_image = Image(graph_image_path)
 
         # Set the image width and height, adjusting to fit the page
-        graph_image.drawHeight = 4 * 72  # 4 inches
+        graph_image.drawHeight = 5 * 72  # 4 inches
         graph_image.drawWidth = 7 * 72  # 7 inches
 
         # Build the PDF with the patient details, graph, and the table
