@@ -13,13 +13,17 @@ class PainTrackerApp:
     def __init__(self, master):
         self.master = master
         master.title("Pain Tracker")
-        master.geometry("1650x750")  # Increased width to accommodate side-by-side layout
+        master.geometry("1650x750")
 
+        self.track_two_areas = tk.BooleanVar(value=False)
         self.master.bind("<Delete>", self.on_delete_key)
-        self.pain0 = tk.IntVar()
-        self.current_pain = tk.IntVar()
+        self.pain0_1 = tk.IntVar()
+        self.current_pain_1 = tk.IntVar()
+        self.pain0_2 = tk.IntVar()
+        self.current_pain_2 = tk.IntVar()
         self.time_point = 0
-        self.target_pain_score = 0
+        self.target_pain_score_1 = 0
+        self.target_pain_score_2 = 0
         self.use_minutes = tk.BooleanVar(value=True)
         self.show_actual_pain = tk.BooleanVar(value=True)
         self.show_comments = tk.BooleanVar(value=True)
@@ -31,9 +35,11 @@ class PainTrackerApp:
         self.patient_nhi = tk.StringVar()
         self.procedure_date = tk.StringVar()
         self.procedure_name = tk.StringVar()
+        self.pain_area_1 = tk.StringVar(value="Area 1")
+        self.pain_area_2 = tk.StringVar(value="Area 2")
 
         self.create_widgets()
-        # The create_graph method will be called within create_widgets
+
 
     def create_widgets(self):
         main_frame = ttk.Frame(self.master, padding="10")
@@ -45,23 +51,53 @@ class PainTrackerApp:
         left_frame = ttk.Frame(main_frame)
         left_frame.grid(row=0, column=0, sticky=(tk.W, tk.E, tk.N, tk.S))
         left_frame.columnconfigure(0, weight=1)
-        left_frame.rowconfigure(4, weight=1)  # Make the table expandable
+        left_frame.rowconfigure(5, weight=1)  # Make the table expandable
 
         # Pain Score Entry
         pain_frame = ttk.LabelFrame(left_frame, text="Pain Score Entry", padding="10")
         pain_frame.grid(row=0, column=0, padx=5, pady=5, sticky="ew")
 
-        ttk.Label(pain_frame, text="Starting pain score (0-100):").grid(row=0, column=0, padx=5, pady=5, sticky="e")
-        ttk.Entry(pain_frame, textvariable=self.pain0, width=10).grid(row=0, column=1, padx=5, pady=5)
-        ttk.Button(pain_frame, text="Start", command=self.start_tracking).grid(row=0, column=2, padx=5, pady=5)
+        ttk.Checkbutton(pain_frame, text="Track Two Pain Areas", variable=self.track_two_areas, command=self.toggle_second_area).grid(row=0, column=0, columnspan=6, padx=5, pady=5, sticky="w")
 
-        ttk.Label(pain_frame, text="Current pain score (0-100):").grid(row=1, column=0, padx=5, pady=5, sticky="e")
-        ttk.Entry(pain_frame, textvariable=self.current_pain, width=10).grid(row=1, column=1, padx=5, pady=5)
-        ttk.Label(pain_frame, text="Time post last entry:").grid(row=1, column=2, padx=5, pady=5, sticky="e")
+        ttk.Label(pain_frame, text="Area 1:").grid(row=1, column=0, padx=5, pady=5, sticky="e")
+        self.pain_area_1_entry = ttk.Entry(pain_frame, textvariable=self.pain_area_1, width=10)
+        self.pain_area_1_entry.grid(row=1, column=1, padx=5, pady=5)
+        ttk.Label(pain_frame, text="Starting pain (0-100):").grid(row=1, column=2, padx=5, pady=5, sticky="e")
+        self.pain0_1_entry = ttk.Entry(pain_frame, textvariable=self.pain0_1, width=10)
+        self.pain0_1_entry.grid(row=1, column=3, padx=5, pady=5)
+        ttk.Label(pain_frame, text="Current pain (0-100):").grid(row=1, column=4, padx=5, pady=5, sticky="e")
+        self.current_pain_1_entry = ttk.Entry(pain_frame, textvariable=self.current_pain_1, width=10)
+        self.current_pain_1_entry.grid(row=1, column=5, padx=5, pady=5)
+
+        self.area2_widgets = []
+        ttk.Label(pain_frame, text="Area 2:").grid(row=2, column=0, padx=5, pady=5, sticky="e")
+        self.pain_area_2_entry = ttk.Entry(pain_frame, textvariable=self.pain_area_2, width=10)
+        self.pain_area_2_entry.grid(row=2, column=1, padx=5, pady=5)
+        self.area2_widgets.append(self.pain_area_2_entry)
+        ttk.Label(pain_frame, text="Starting pain (0-100):").grid(row=2, column=2, padx=5, pady=5, sticky="e")
+        self.pain0_2_entry = ttk.Entry(pain_frame, textvariable=self.pain0_2, width=10)
+        self.pain0_2_entry.grid(row=2, column=3, padx=5, pady=5)
+        self.area2_widgets.append(self.pain0_2_entry)
+        ttk.Label(pain_frame, text="Current pain (0-100):").grid(row=2, column=4, padx=5, pady=5, sticky="e")
+        self.current_pain_2_entry = ttk.Entry(pain_frame, textvariable=self.current_pain_2, width=10)
+        self.current_pain_2_entry.grid(row=2, column=5, padx=5, pady=5)
+        self.area2_widgets.append(self.current_pain_2_entry)
+
+
+        ttk.Label(pain_frame, text="Time post last entry:").grid(row=3, column=0, padx=5, pady=5, sticky="e")
         self.custom_time_entry = ttk.Entry(pain_frame, textvariable=self.custom_time, width=10)
-        self.custom_time_entry.grid(row=1, column=3, padx=5, pady=5)
-        ttk.Button(pain_frame, text="Add", command=self.add_pain_score).grid(row=1, column=4, padx=5, pady=5)
+        self.custom_time_entry.grid(row=3, column=1, padx=5, pady=5)
+        self.start_button = ttk.Button(pain_frame, text="Start", command=self.start_tracking)
+        self.start_button.grid(row=3, column=2, padx=5, pady=5)
+        ttk.Button(pain_frame, text="Add", command=self.add_pain_score).grid(row=3, column=3, padx=5, pady=5)
 
+        self.toggle_second_area()  # Initially hide Area 2 widgets
+
+        self.current_pain_1_entry.config(state="disabled")
+        self.current_pain_2_entry.config(state="disabled")
+        self.custom_time_entry.config(state="disabled")
+
+        # Options Frame
         time_frame = ttk.LabelFrame(left_frame, text="Options", padding="10")
         time_frame.grid(row=1, column=0, padx=5, pady=5, sticky="ew")
         options = [
@@ -79,27 +115,39 @@ class PainTrackerApp:
 
         # First row
         ttk.Label(patient_frame, text="Patient Name:").grid(row=0, column=0, padx=5, pady=5, sticky="e")
-        ttk.Entry(patient_frame, textvariable=self.patient_name, width=40).grid(row=0, column=1, padx=5, pady=5, sticky="w")
+        ttk.Entry(patient_frame, textvariable=self.patient_name, width=30).grid(row=0, column=1, padx=5, pady=5, sticky="w")
 
         ttk.Label(patient_frame, text="Patient NHI:").grid(row=0, column=2, padx=5, pady=5, sticky="e")
-        ttk.Entry(patient_frame, textvariable=self.patient_nhi, width=40).grid(row=0, column=3, padx=5, pady=5, sticky="w")
+        ttk.Entry(patient_frame, textvariable=self.patient_nhi, width=20).grid(row=0, column=3, padx=5, pady=5, sticky="w")
 
         # Second row
         ttk.Label(patient_frame, text="Procedure Date (DD-MM-YYYY):").grid(row=1, column=0, padx=5, pady=5, sticky="e")
-        ttk.Entry(patient_frame, textvariable=self.procedure_date, width=40).grid(row=1, column=1, padx=5, pady=5, sticky="w")
+        ttk.Entry(patient_frame, textvariable=self.procedure_date, width=30).grid(row=1, column=1, padx=5, pady=5, sticky="w")
 
         ttk.Label(patient_frame, text="Procedure Name:").grid(row=1, column=2, padx=5, pady=5, sticky="e")
-        ttk.Entry(patient_frame, textvariable=self.procedure_name, width=40).grid(row=1, column=3, padx=5, pady=5, sticky="w")
+        ttk.Entry(patient_frame, textvariable=self.procedure_name, width=20).grid(row=1, column=3, padx=5, pady=5, sticky="w")
 
         # Table
         table_frame = ttk.Frame(left_frame)
-        table_frame.grid(row=3, column=0, padx=5, pady=0, sticky="nsew")
+        table_frame.grid(row=3, column=0, padx=2, pady=0, sticky="nsew")
         table_frame.columnconfigure(0, weight=1)
         table_frame.rowconfigure(0, weight=1)
 
-        self.tree = ttk.Treeview(table_frame, columns=("Time", "Pain Score", "Reduction", "Comment"), show="headings", height=15)
-        for col in self.tree["columns"]:
+        self.tree = ttk.Treeview(table_frame, columns=("Time", "Pain Score 1", "Reduction 1", "Pain Score 2", "Reduction 2", "Comment"), show="headings", height=15)
+        
+        # Setting specific widths for each column
+        column_widths = {
+            "Time": 80,
+            "Pain Score 1": 80,
+            "Reduction 1": 200,
+            "Pain Score 2": 80,
+            "Reduction 2": 200,
+            "Comment": 180,
+        }
+        for col, width in column_widths.items():
             self.tree.heading(col, text=col)
+            self.tree.column(col, width=width, stretch=tk.YES)  # Fixed width and prevent stretching
+
         self.tree.grid(row=0, column=0, sticky="nsew")
         scrollbar = ttk.Scrollbar(table_frame, orient="vertical", command=self.tree.yview)
         scrollbar.grid(row=0, column=1, sticky="ns")
@@ -108,7 +156,7 @@ class PainTrackerApp:
 
         # Buttons
         button_frame = ttk.Frame(left_frame)
-        button_frame.grid(row=4, column=0, padx=5, pady=0, sticky="ew")
+        button_frame.grid(row=4, column=0, padx=2, pady=0, sticky="ew")
         buttons = [
             ("Delete Selected", self.delete_selected),
             ("Add/Edit Comment", self.add_edit_comment),
@@ -120,14 +168,27 @@ class PainTrackerApp:
         for i, (text, cmd) in enumerate(buttons):
             ttk.Button(button_frame, text=text, command=cmd).grid(row=0, column=i, padx=5, pady=5, sticky="ew")
 
-
         # Right side frame for graph
         right_frame = ttk.Frame(main_frame)
         right_frame.grid(row=0, column=1, sticky=(tk.W, tk.E, tk.N, tk.S))
         self.create_graph(right_frame)
 
+    def toggle_second_area(self):
+        if self.track_two_areas.get():
+            for widget in self.area2_widgets:
+                widget.grid()
+        else:
+            for widget in self.area2_widgets:
+                widget.grid_remove()
+        
+        # Only restart if the Treeview widget (self.tree) is fully initialized
+        if hasattr(self, 'tree'):
+            self.restart()
+
+
+
     def create_graph(self, parent):
-        self.figure = Figure(figsize=(8, 6), dpi=100)  # Adjusted size for vertical layout
+        self.figure = Figure(figsize=(8, 6), dpi=100)
         self.ax = self.figure.add_subplot(111)
         self.ax.set_title("Pain Graph")
         self.ax.set_xlabel("Time")
@@ -141,32 +202,40 @@ class PainTrackerApp:
         self.canvas.get_tk_widget().pack(fill=tk.BOTH, expand=True)
 
     def update_graph(self):
-        time_points, pain_scores, comments = self.get_graph_data()
+        time_points, pain_scores_1, pain_scores_2, comments = self.get_graph_data()
         self.ax.clear()
         self.ax.set_ylim(0, 100)
         self.ax.set_yticks(np.arange(0, 101, 10))
 
-        if pain_scores:
-            self.ax.plot(time_points, pain_scores, marker='o', linestyle='-', color='blue')
-            
-            # Check if there's only one data point
+        if pain_scores_1:
+            self.ax.plot(time_points, pain_scores_1, marker='o', linestyle='-', color='blue', label=self.pain_area_1.get())
+            if self.track_two_areas.get() and pain_scores_2:
+                self.ax.plot(time_points, pain_scores_2, marker='s', linestyle='-', color='red', label=self.pain_area_2.get())
+
             if len(time_points) == 1:
-                # Expand the xlim slightly to avoid the singular transformation warning
                 self.ax.set_xlim(time_points[0] - 0.5, time_points[0] + 0.5)
             else:
                 self.ax.set_xlim(min(time_points), max(time_points))
-            
+
             if self.show_actual_pain.get():
-                for x, y in zip(time_points, pain_scores):
-                    self.ax.text(x, y + 2, f"{y}", ha='center', va='bottom', fontsize=9)
+                for x, y1 in zip(time_points, pain_scores_1):
+                    self.ax.text(x, y1 + 2, f"{y1}", ha='center', va='bottom', fontsize=9, color='blue')
+                if self.track_two_areas.get():
+                    for x, y2 in zip(time_points, pain_scores_2):
+                        self.ax.text(x, y2 + 2, f"{y2}", ha='center', va='bottom', fontsize=9, color='red')
+
             if self.show_comments.get():
-                for x, y, comment in zip(time_points, pain_scores, comments):
+                for i, comment in enumerate(comments):
                     if comment:
-                        self.ax.annotate(comment, (x, y), xytext=(0, 30), textcoords="offset points", ha='center', va='bottom', bbox=dict(boxstyle="round,pad=0.3", fc="yellow", ec="b", lw=1, alpha=0.8))
-        
-            if self.show_80_percent_line.get():  # Draw the 80% reduction line
-                self.ax.axhline(y=self.target_pain_score, color='red', linestyle='--', label='80% Reduction')
-                self.ax.legend()
+                        y = pain_scores_1[i] if not self.track_two_areas.get() else max(pain_scores_1[i], pain_scores_2[i] if pain_scores_2 else 0)
+                        self.ax.annotate(comment, (time_points[i], y), xytext=(0, 30), textcoords="offset points", ha='center', va='bottom', bbox=dict(boxstyle="round,pad=0.3", fc="yellow", ec="b", lw=1, alpha=0.8))
+
+            if self.show_80_percent_line.get():
+                self.ax.axhline(y=self.target_pain_score_1, color='blue', linestyle='--', label=f'80% Reduction ({self.pain_area_1.get()})')
+                if self.track_two_areas.get():
+                    self.ax.axhline(y=self.target_pain_score_2, color='red', linestyle='--', label=f'80% Reduction ({self.pain_area_2.get()})')
+
+            self.ax.legend()
 
         else:
             self.ax.set_xlim(0, 1)
@@ -177,14 +246,34 @@ class PainTrackerApp:
         self.ax.set_ylabel("Pain Score")
         self.canvas.draw()
 
+
+
     def get_graph_data(self):
-        time_points, pain_scores, comments = [], [], []
+        time_points, pain_scores_1, pain_scores_2, comments = [], [], [], []
         for child in self.tree.get_children():
             item = self.tree.item(child)["values"]
+            
+            # Extract the time point (first column)
             time_points.append(int(item[0].split()[0] if self.use_minutes.get() else item[0].split()[1]))
-            pain_scores.append(int(item[1]))
-            comments.append(item[3])
-        return time_points, pain_scores, comments
+            
+            # Extract Pain Score 1 from the second column
+            pain_scores_1.append(int(item[1]) if item[1] != 'N/A' else None)
+            
+            if self.track_two_areas.get():
+                # Extract Pain Score 2 from the fourth column (if tracking two areas)
+                pain_scores_2.append(int(item[3]) if item[3] != 'N/A' else None)
+                # Extract the comment from the sixth column
+                comments.append(item[5] if len(item) > 5 else "")
+            else:
+                # Extract the comment from the correct column when only one area is tracked
+                comments.append(item[5] if len(item) > 5 else "")
+                pain_scores_2 = []  # Ensure this remains empty when not tracking the second area
+                
+        return time_points, pain_scores_1, pain_scores_2, comments
+
+
+
+
 
     def toggle_time_display(self):
         self.restart()
@@ -201,30 +290,69 @@ class PainTrackerApp:
 
     def start_tracking(self):
         try:
-            initial_pain = self.pain0.get()
-            if 0 <= initial_pain <= 100:
-                self.target_pain_score = initial_pain * 20 // 100
+            initial_pain_1 = self.pain0_1.get()
+            if 0 <= initial_pain_1 <= 100:
+                self.target_pain_score_1 = initial_pain_1 * 20 // 100
                 self.tree.delete(*self.tree.get_children())
-                self.tree.insert("", "end", values=(self.get_time_display(0), f"{initial_pain:3d}", f"N/A - Target for 80% Reduction: {self.target_pain_score}", ""))
+                values = [self.get_time_display(0), f"{initial_pain_1:3d}", f"N/A - Target for 80% Reduction: {self.target_pain_score_1}"]
+                
+                # Disable entries for Area 1 and Area 2
+                self.disable_entries()
+
+                if self.track_two_areas.get():
+                    initial_pain_2 = self.pain0_2.get()
+                    if 0 <= initial_pain_2 <= 100:
+                        self.target_pain_score_2 = initial_pain_2 * 20 // 100
+                        values.extend([f"{initial_pain_2:3d}", f"N/A - Target for 80% Reduction: {self.target_pain_score_2}"])
+                    else:
+                        messagebox.showerror("Error", "Initial pain scores must be between 0 and 100.")
+                        self.enable_entries()  # Re-enable if there's an error
+                        return
+                
+                values.append("")  # For comment
+                self.tree.insert("", "end", values=tuple(values))
                 self.time_point = 0
                 self.update_graph()
+                self.current_pain_1_entry.config(state="normal")
+                self.current_pain_2_entry.config(state="normal")
+                self.custom_time_entry.config(state="normal")
             else:
-                messagebox.showerror("Error", "Initial pain score must be between 0 and 100.")
+                messagebox.showerror("Error", "Initial pain scores must be between 0 and 100.")
         except tk.TclError:
-            messagebox.showerror("Error", "Please enter a valid number for the starting pain score.")
+            messagebox.showerror("Error", "Please enter valid numbers for the starting pain scores.")
+            self.enable_entries()  # Re-enable if there's an error
+
+
 
     def add_pain_score(self):
         try:
-            current_pain = self.current_pain.get()
-            if 0 <= current_pain <= 100:
+            current_pain_1 = self.current_pain_1.get()
+            if 0 <= current_pain_1 <= 100:
                 self.time_point += self.custom_time.get() if self.use_minutes.get() else 1
-                reduction_percentage = ((self.pain0.get() - current_pain) * 100) // self.pain0.get()
-                self.tree.insert("", "end", values=(self.get_time_display(self.time_point), f"{current_pain:3d}", f"{reduction_percentage}%", ""))
+                reduction_percentage_1 = ((self.pain0_1.get() - current_pain_1) * 100) // self.pain0_1.get() if self.pain0_1.get() != 0 else 'N/A'
+                values = [self.get_time_display(self.time_point), f"{current_pain_1:3d}", f"{reduction_percentage_1}%"]
+                
+                if self.track_two_areas.get():
+                    current_pain_2 = self.current_pain_2.get()
+                    if 0 <= current_pain_2 <= 100:
+                        reduction_percentage_2 = ((self.pain0_2.get() - current_pain_2) * 100) // self.pain0_2.get() if self.pain0_2.get() != 0 else 'N/A'
+                        values.extend([f"{current_pain_2:3d}", f"{reduction_percentage_2}%"])
+                    else:
+                        messagebox.showerror("Error", "Pain scores must be between 0 and 100.")
+                        return
+                else:
+                    # Fill with "N/A" for the untracked area
+                    values.extend(["N/A", "N/A"])
+                
+                values.append("")  # For comment
+                self.tree.insert("", "end", values=tuple(values))
                 self.update_graph()
             else:
-                messagebox.showerror("Error", "Pain score must be between 0 and 100.")
+                messagebox.showerror("Error", "Pain scores must be between 0 and 100.")
         except tk.TclError:
-            messagebox.showerror("Error", "Please enter a valid number for the current pain score.")
+            messagebox.showerror("Error", "Please enter valid numbers for the current pain scores.")
+
+
 
     def delete_selected(self):
         for item in self.tree.selection():
@@ -257,12 +385,18 @@ class PainTrackerApp:
 
 
     def restart(self):
-        self.pain0.set(0)
-        self.current_pain.set(0)
+        self.pain0_1.set(0)
+        self.pain0_2.set(0)
+        self.current_pain_1.set(0)
+        self.current_pain_2.set(0)
         self.time_point = 0
-        self.target_pain_score = 0
+        self.target_pain_score_1 = 0
+        self.target_pain_score_2 = 0
         self.tree.delete(*self.tree.get_children())
         self.update_graph()
+        
+        # Re-enable the entries for Area 1 and Area 2
+        self.enable_entries()
 
     def copy_to_clipboard(self):
         headers = "Time\tPain\tReduction\tComment\n"
@@ -272,15 +406,15 @@ class PainTrackerApp:
         messagebox.showinfo("Copied", "Table data has been copied to clipboard.")
 
     def add_edit_comment(self, event=None):
-        item = self.tree.selection()[0] if not event else self.tree.identify_row(event.y) if self.tree.identify_column(event.x) == "#4" else None
+        item = self.tree.selection()[0] if not event else self.tree.identify_row(event.y) if self.tree.identify_column(event.x) == "#6" else None
         if not item:
             messagebox.showinfo("Info", "Please select a row to add/edit a comment.")
             return
 
         values = self.tree.item(item, "values")
-        new_comment = simpledialog.askstring("Add/Edit Comment", "Enter your comment:", initialvalue=values[3])
+        new_comment = simpledialog.askstring("Add/Edit Comment", "Enter your comment:", initialvalue=values[5])
         if new_comment is not None:
-            self.tree.item(item, values=(values[0], values[1], values[2], new_comment))
+            self.tree.item(item, values=(values[0], values[1], values[2], values[3], values[4], new_comment))
             self.update_graph()
 
     def export_to_pdf(self):
@@ -312,7 +446,7 @@ class PainTrackerApp:
         patient_details = Paragraph(f"<strong>Patient Name</strong>: {patient_name}<br/><strong>Patient NHI</strong>: {patient_nhi}<br/><strong>Procedure Date</strong>: {procedure_date}<br/><strong>Procedure Name</strong>: {procedure_name}<br/><br/>", styles["Normal"])
 
         # Prepare data for the table
-        data = [["Time", "Pain", "Reduction", "Comment"]]
+        data = [["Time", f"{self.pain_area_1.get()} Pain", f"{self.pain_area_1.get()} Reduction", f"{self.pain_area_2.get()} Pain", f"{self.pain_area_2.get()} Reduction", "Comment"]]
         for child in self.tree.get_children():
             item = self.tree.item(child)["values"]
             data.append(item)
@@ -345,7 +479,24 @@ class PainTrackerApp:
 
         messagebox.showinfo("Exported", f"Pain Tracker data has been exported to {file_path}.")
 
+    def disable_entries(self):
+        # Disable entries for Area 1 and Area 2
+        self.pain_area_1_entry.config(state="disabled")
+        self.pain_area_2_entry.config(state="disabled")
+        self.pain0_1_entry.config(state="disabled")
+        self.pain0_2_entry.config(state="disabled")
+        self.start_button.config(state="disabled")
 
+
+    def enable_entries(self):
+        # Re-enable entries for Area 1 and Area 2
+        self.pain_area_1_entry.config(state="normal")
+        self.pain_area_2_entry.config(state="normal")
+        self.pain0_1_entry.config(state="normal")
+        self.pain0_2_entry.config(state="normal")
+        self.start_button.config(state="normal")
+        #self.current_pain_1_entry.config(state="normal")
+        #self.current_pain_2_entry.config(state="normal")
 
 if __name__ == "__main__":
     root = tk.Tk()
